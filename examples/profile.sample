@@ -1,0 +1,32 @@
+# ============================================================
+# UniShell - examples/profile.sample   (Phase 6: Shell Programming)
+# A SAMPLE .profile, shown for teaching only.
+#
+# A login shell reads your real ~/.profile once, when you log in, to set up
+# your environment. UniShell NEVER reads and NEVER changes your real
+# ~/.profile or any other shell configuration file. It displays this sample
+# file instead, so you can see the shape of one safely.
+#
+# This file is plain text: UniShell only prints it, it is never executed.
+# ============================================================
+
+# A .profile runs commands that set up your environment at login.
+
+# Add your own bin directory to PATH. PATH is the list of folders the shell
+# searches through, in order, to find a program you type.
+PATH="$HOME/bin:$PATH"
+export PATH
+
+# PS1 is the prompt string: \u is the user, \h the host, \w the directory.
+PS1='\u@\h:\w\$ '
+
+# Tell other programs which editor you prefer.
+EDITOR=vi
+export EDITOR
+
+# A real .profile often hands over to .bashrc at the end, like this:
+#     if [ -n "$BASH_VERSION" ] && [ -f "$HOME/.bashrc" ]; then
+#         . "$HOME/.bashrc"
+#     fi
+# UniShell shows those lines as a comment only, so this sample file is never
+# executed and nothing in your environment can change.

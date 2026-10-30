@@ -1,0 +1,372 @@
+# UniShell command library
+# COMMAND: awk | PURPOSE: pick one "### name" block out of this file | MODULE: Text Processing
+#
+# Every entry starts with a line of the form "### name" and then lists fixed
+# fields. modules/commands.sh prints one block at a time, so a beginner can see
+# one command without being buried in text.
+#
+# SYLLABUS mapping used throughout:
+#   Module 1 = Unix Basics (files, directories, simple commands)
+#   Module 2 = Shell Programming (scripts, variables, control flow)
+#   Module 3 = File System and Permissions (modes, ownership)
+#   Module 4 = Text Processing (filters, pipes, regular expressions)
+
+### echo
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : Write text, or the value of a variable, to standard output.
+SYNTAX   : echo [option] [string ...]
+EXAMPLE  : echo "Hello, UniShell"
+OUTPUT   : Hello, UniShell
+USES     : Printing messages, showing variable values, building script output.
+NOTES    : -n suppresses the trailing newline; -e turns on the \n and \t escapes.
+
+### printf
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : Print text using a format string, so the layout is fully controlled.
+SYNTAX   : printf 'format' [argument ...]
+EXAMPLE  : printf 'Name: %-8s Score: %3d\n' "Ann" 90
+OUTPUT   : Name: Ann      Score:  90
+USES     : Aligned tables and reports; predictable output inside scripts.
+NOTES    : Unlike echo, printf adds a newline only when the format contains \n.
+
+### ls
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : List the contents of a directory.
+SYNTAX   : ls [option] [path]
+EXAMPLE  : ls -la sandbox
+OUTPUT   : one line per entry showing permissions, owner, size, date and name
+USES     : Seeing what exists, checking permissions, finding hidden files.
+NOTES    : -a shows hidden files, -l is the long form, -R recurses into subdirectories.
+
+### who
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : Show which users are currently logged in.
+SYNTAX   : who [option]
+EXAMPLE  : who
+OUTPUT   : one line per active session: user, terminal, login time
+USES     : Checking who else is using a shared machine.
+NOTES    : The list comes from the utmp file. Inside WSL it is often empty.
+
+### date
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : Print (or set) the system date and time.
+SYNTAX   : date [option] [+format]
+EXAMPLE  : date '+%Y-%m-%d %H:%M:%S'
+OUTPUT   : 2025-10-29 18:05:41
+USES     : Timestamping log entries and filenames; timing a script.
+NOTES    : %Y year, %m month, %d day, %H hour, %M minute, %S second.
+
+### cal
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : Display a calendar for one month or a whole year.
+SYNTAX   : cal [month] [year]
+EXAMPLE  : cal 10 2025
+OUTPUT   : the calendar of October 2025
+USES     : Looking up a date without leaving the terminal.
+NOTES    : Comes from the ncal package on Ubuntu; with no argument it shows this month.
+
+### type
+SYLLABUS : Module 2 - Shell Programming
+PURPOSE  : Explain how the shell would interpret a command name.
+SYNTAX   : type [option] name ...
+EXAMPLE  : type ls
+OUTPUT   : ls is /usr/bin/ls      (or: ls is a shell builtin / aliased to ...)
+USES     : Learning whether a name is a builtin, an alias, a function or a program.
+NOTES    : -a lists every match; -t prints only the category.
+
+### pwd
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : Print the absolute path of the current working directory.
+SYNTAX   : pwd
+EXAMPLE  : pwd
+OUTPUT   : /home/hp/UniShell
+USES     : Knowing exactly where you are before using a relative path.
+NOTES    : The shell builtin shows the logical path; /bin/pwd shows the physical one.
+
+### cd
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : Change the current working directory.
+SYNTAX   : cd [path]
+EXAMPLE  : cd sandbox
+OUTPUT   : nothing on success; an error message if the path does not exist
+USES     : Moving around the file system. cd .. goes up, plain cd goes to $HOME.
+NOTES    : cd is a shell builtin, so it must be run directly and cannot go in a pipe.
+
+### mkdir
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : Create one or more directories.
+SYNTAX   : mkdir [option] directory ...
+EXAMPLE  : mkdir -p sandbox/demo/inner
+OUTPUT   : nothing on success
+USES     : Building the folder structure for a project.
+NOTES    : -p creates missing parents and does not fail if the path already exists.
+
+### rmdir
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : Remove an EMPTY directory.
+SYNTAX   : rmdir [option] directory ...
+EXAMPLE  : rmdir sandbox/demo/inner
+OUTPUT   : nothing on success; an error if the directory still holds files
+USES     : Cleaning up safely, because it refuses to delete data.
+NOTES    : -p also removes the parents when they become empty.
+
+### cat
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : Print file contents, or join several files into one stream.
+SYNTAX   : cat [option] [file ...]
+EXAMPLE  : cat sandbox/notes.txt
+OUTPUT   : the whole contents of the file
+USES     : Reading small files and feeding data into a pipe.
+NOTES    : -n numbers the lines. cat with no file reads standard input.
+
+### mv
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : Move or rename a file or directory.
+SYNTAX   : mv [option] source target
+EXAMPLE  : mv sandbox/old.txt sandbox/new.txt
+OUTPUT   : nothing on success
+USES     : Renaming files and reorganising directories.
+NOTES    : -i asks before overwriting an existing target. There is no "undo".
+
+### rm
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : Remove files, and with -r also directories.
+SYNTAX   : rm [option] file ...
+EXAMPLE  : rm sandbox/old.txt
+OUTPUT   : nothing on success
+USES     : Deleting files that are no longer needed.
+NOTES    : Deleting is permanent. UniShell only ever runs rm on a path it has checked is inside ./sandbox.
+
+### cp
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : Copy files, and with -r also directories.
+SYNTAX   : cp [option] source target
+EXAMPLE  : cp sandbox/notes.txt sandbox/notes.bak
+OUTPUT   : nothing on success
+USES     : Making a backup before editing or experimenting.
+NOTES    : -r copies directories; -i asks before overwriting; -p keeps times and permissions.
+
+### wc
+SYLLABUS : Module 4 - Text Processing
+PURPOSE  : Count lines, words and bytes in its input.
+SYNTAX   : wc [option] [file ...]
+EXAMPLE  : wc -l data/sample.log
+OUTPUT   : 32 data/sample.log
+USES     : Measuring a file, or counting how much a pipe produced.
+NOTES    : -l lines, -w words, -c bytes, -m characters. With no file it counts standard input.
+
+### od
+SYLLABUS : Module 4 - Text Processing
+PURPOSE  : Dump a file in octal, decimal or hexadecimal so every byte is visible.
+SYNTAX   : od [option] [file ...]
+EXAMPLE  : od -c sandbox/tiny.txt
+OUTPUT   : each byte shown as a character, e.g.   h   o   m   e  \n
+USES     : Finding hidden characters such as a stray CR, TAB or a missing newline.
+NOTES    : -c shows characters, -x shows hexadecimal. It proved the CRLF problem in this project.
+
+### chmod
+SYLLABUS : Module 3 - File System and Permissions
+PURPOSE  : Change the read, write and execute permission of a file or directory.
+SYNTAX   : chmod [ugoa][+-=][rwx] file     or     chmod 644 file
+EXAMPLE  : chmod 640 sandbox/notes.txt
+OUTPUT   : nothing on success
+USES     : Deciding who may read, change or run a file.
+NOTES    : r=4, w=2, x=1. So 640 means owner rw-, group r--, others ---.
+
+### grep
+SYLLABUS : Module 4 - Text Processing
+PURPOSE  : Print the lines that match a pattern (basic regular expressions).
+SYNTAX   : grep [option] pattern [file ...]
+EXAMPLE  : grep -c ERROR data/sample.log
+OUTPUT   : 7
+USES     : Searching logs and source files, and filtering a stream inside a pipe.
+NOTES    : -c counts, -n shows line numbers, -i ignores case, -v inverts the match.
+
+### egrep
+SYLLABUS : Module 4 - Text Processing
+PURPOSE  : Like grep but uses extended regular expressions.
+SYNTAX   : egrep [option] pattern [file ...]
+EXAMPLE  : egrep -c 'ERROR|WARN' data/sample.log
+OUTPUT   : 14
+USES     : Matching alternatives and groups without escaping + ? { } ( ).
+NOTES    : egrep is the old name for "grep -E". Both forms are available here.
+
+### read
+SYLLABUS : Module 2 - Shell Programming
+PURPOSE  : Read one line of input from the user into shell variables.
+SYNTAX   : read [option] variable ...
+EXAMPLE  : read -r name
+OUTPUT   : waits for a line, then stores it in $name
+USES     : Interactive scripts, and loops that process input line by line.
+NOTES    : -r stops the backslash being treated specially; use it for plain text.
+
+### readonly
+SYLLABUS : Module 2 - Shell Programming
+PURPOSE  : Mark a variable or function so it cannot be changed afterwards.
+SYNTAX   : readonly name[=value]
+EXAMPLE  : readonly LIMIT=5
+OUTPUT   : nothing; a later "LIMIT=9" fails with "readonly variable"
+USES     : Protecting important settings in a script from being overwritten.
+NOTES    : It cannot be undone in the same shell, so UniShell demonstrates it inside a subshell.
+
+### test
+SYLLABUS : Module 2 - Shell Programming
+PURPOSE  : Evaluate a condition and return exit status 0 (true) or 1 (false).
+SYNTAX   : test expression      or      [ expression ]
+EXAMPLE  : [ -f sandbox/notes.txt ] && echo yes
+OUTPUT   : yes   (when the file exists)
+USES     : If and while conditions in every non-trivial script.
+NOTES    : -f file, -d directory, -e exists, -z empty string, -eq/-lt number comparison.
+
+### set
+SYLLABUS : Module 2 - Shell Programming
+PURPOSE  : Change shell options and the positional parameters.
+SYNTAX   : set [option] [--] [argument ...]
+EXAMPLE  : set -u
+OUTPUT   : nothing; afterwards an unset variable becomes an error
+USES     : Making scripts stricter (-u, -o pipefail) and reading $1, $2, ...
+NOTES    : set -- a b c sets $1..$3; set -x traces every command as it runs.
+
+### shift
+SYLLABUS : Module 2 - Shell Programming
+PURPOSE  : Drop the first positional parameter and move the rest down by one.
+SYNTAX   : shift [n]
+EXAMPLE  : a loop that shifts through "$@"
+OUTPUT   : $1 becomes what used to be $2
+USES     : Processing a command's arguments one at a time.
+NOTES    : When $# reaches 0 there is nothing left; shifting again is an error.
+
+### trap
+SYLLABUS : Module 2 - Shell Programming
+PURPOSE  : Run a command when the shell receives a signal or reaches exit.
+SYNTAX   : trap 'command' SIGNAL ...
+EXAMPLE  : trap 'echo bye' EXIT
+OUTPUT   : bye   (printed when the shell exits)
+USES     : Cleaning up temporary files and leaving neatly when Ctrl-C is pressed.
+NOTES    : Common signals: INT (Ctrl-C), TERM, EXIT. "trap - INT" removes a trap.
+
+### passwd
+SYLLABUS : Module 3 - File System and Permissions
+PURPOSE  : Change a user's login password.
+SYNTAX   : passwd [user]
+EXAMPLE  : (never run by UniShell)
+OUTPUT   : prompts for the current and the new password
+USES     : Keeping an account secure.
+NOTES    : Never run automatically: it changes real system state and can lock you out.
+
+### su
+SYLLABUS : Module 3 - File System and Permissions
+PURPOSE  : Start a shell as another user (switch user).
+SYNTAX   : su [-] [user]
+EXAMPLE  : (never run by UniShell)
+OUTPUT   : prompts for the target user's password
+USES     : Doing administrative work as the superuser.
+NOTES    : Never run automatically: it grants unlimited power over the machine.
+
+### touch
+SYLLABUS : Module 1 - Unix Basics
+PURPOSE  : Create an empty file, or update a file's timestamps.
+SYNTAX   : touch [option] file ...
+EXAMPLE  : touch sandbox/notes.txt
+OUTPUT   : nothing on success
+USES     : Making placeholder files and refreshing modification times.
+NOTES    : -a changes only the access time, -m only the modification time.
+
+### stat
+SYLLABUS : Module 3 - File System and Permissions
+PURPOSE  : Show detailed metadata: size, inode, permission bits, owner and times.
+SYNTAX   : stat [option] file
+EXAMPLE  : stat sandbox/notes.txt
+OUTPUT   : File, Size, Inode, Access (0640/-rw-r-----), Uid, Gid and timestamps
+USES     : Reading the exact permission bits or inode number of a file.
+NOTES    : -c 'format' prints only chosen fields, for example stat -c '%a %n'.
+
+### umask
+SYLLABUS : Module 3 - File System and Permissions
+PURPOSE  : Set the default permissions given to NEW files and directories.
+SYNTAX   : umask [mask]
+EXAMPLE  : umask 022
+OUTPUT   : nothing; new files then receive 644 and new directories 755
+USES     : Deciding how open newly created files are by default.
+NOTES    : The mask is subtracted from the maximum: 666-mask for files, 777-mask for directories.
+
+### chown
+SYLLABUS : Module 3 - File System and Permissions
+PURPOSE  : Change the owner and/or the group of a file or directory.
+SYNTAX   : chown user[:group] file
+EXAMPLE  : (never run by UniShell)
+OUTPUT   : nothing on success
+USES     : Handing a file to another user, or correcting wrong ownership.
+NOTES    : Changing an owner normally needs root, so UniShell explains it and never runs it.
+
+### sort
+SYLLABUS : Module 4 - Text Processing
+PURPOSE  : Sort the lines of its input.
+SYNTAX   : sort [option] [file ...]
+EXAMPLE  : sort data/sample.log | uniq -c | sort -rn
+OUTPUT   : the lines grouped, counted, then ordered by how often they appear
+USES     : Grouping equal lines so uniq can count them; ordering a report.
+NOTES    : -n numeric, -r reverse, -u unique, -k field, -t delimiter.
+
+### uniq
+SYLLABUS : Module 4 - Text Processing
+PURPOSE  : Remove or count ADJACENT duplicate lines.
+SYNTAX   : uniq [option] [input [output]]
+EXAMPLE  : sort data/sample.log | uniq -c
+OUTPUT   : a count followed by each distinct line
+USES     : Counting how often a value appears in a log.
+NOTES    : uniq only compares neighbouring lines, so sort the input first.
+
+### cut
+SYLLABUS : Module 4 - Text Processing
+PURPOSE  : Print selected fields or columns from each line.
+SYNTAX   : cut -d delimiter -f list [file ...]
+EXAMPLE  : cut -d' ' -f3 data/sample.log | sort | uniq -c
+OUTPUT   : a count of each level: INFO, WARN, ERROR
+USES     : Pulling one column out of a log or a CSV file.
+NOTES    : -d sets the delimiter (TAB by default), -f chooses fields, -c characters.
+
+### tr
+SYLLABUS : Module 4 - Text Processing
+PURPOSE  : Translate or delete characters in a stream.
+SYNTAX   : tr [option] set1 [set2]
+EXAMPLE  : tr 'a-z' 'A-Z' < data/sample.log
+OUTPUT   : the same text converted to upper case
+USES     : Changing case, squeezing repeated blanks, removing control characters.
+NOTES    : tr reads only standard input, so use a pipe or a "<" redirection.
+
+### head
+SYLLABUS : Module 4 - Text Processing
+PURPOSE  : Print the first lines of its input.
+SYNTAX   : head [option] [file ...]
+EXAMPLE  : head -n 5 data/sample.log
+OUTPUT   : the first five lines
+USES     : Peeking at a large file without printing all of it.
+NOTES    : -n N selects the number of lines, -c N selects bytes.
+
+### tail
+SYLLABUS : Module 4 - Text Processing
+PURPOSE  : Print the last lines of its input.
+SYNTAX   : tail [option] [file ...]
+EXAMPLE  : tail -n 5 data/sample.log
+OUTPUT   : the last five lines
+USES     : Watching the most recent entries of a log file.
+NOTES    : -f follows a file as it grows; -n +N starts from line N.
+
+### tee
+SYLLABUS : Module 4 - Text Processing
+PURPOSE  : Send its input to standard output AND to a file at the same time.
+SYNTAX   : tee [option] [file ...]
+EXAMPLE  : grep ERROR data/sample.log | tee sandbox/errors.txt | wc -l
+OUTPUT   : the matching lines, and the same lines saved in the file
+USES     : Keeping a copy of a stream while still watching it on screen.
+NOTES    : -a appends instead of overwriting; tee splits a pipe into two streams.
+
+### diff
+SYLLABUS : Module 4 - Text Processing
+PURPOSE  : Compare two files line by line and print the differences.
+SYNTAX   : diff [option] file1 file2
+EXAMPLE  : diff sandbox/a.txt sandbox/b.txt
+OUTPUT   : "<" lines from the first file, ">" lines from the second, nothing if equal
+USES     : Seeing exactly what changed between two versions of a file.
+NOTES    : Exit status 0 means identical, 1 means different, 2 means an error.

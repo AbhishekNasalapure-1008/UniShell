@@ -1,0 +1,22 @@
+# UniShell .gitignore
+
+# --- compiled output (never commit binaries) ---
+bin/
+*.o
+*.out
+*.exe
+
+# --- runtime scratch data ---
+sandbox/*
+!sandbox/.gitkeep
+logs/*
+!logs/.gitkeep
+
+# --- temporary files ---
+*.tmp
+*.swp
+*~
+
+# --- editors ---
+.vscode/
+.idea/
