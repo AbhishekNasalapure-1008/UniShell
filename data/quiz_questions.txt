@@ -1,0 +1,139 @@
+# UniShell quiz question bank
+# COMMAND: awk | PURPOSE: read one question block at a time for the quiz module | MODULE: Quiz
+#
+# Each question starts with a line of the form "### qN" and then lists fixed
+# fields, exactly like data/command_library.txt does for commands. Keeping the
+# questions in a data file rather than inside the script means new questions
+# can be added without touching any code.
+#
+# Field meanings:
+#   TOPIC       - which part of the syllabus the question belongs to
+#   QUESTION    - the question itself
+#   OPTION A-D  - the four multiple-choice answers
+#   ANSWER      - the letter of the correct option (A, B, C or D)
+#   HINT        - a nudge offered before answering
+#   EXPLANATION - why the answer is right (and the others are not)
+#
+# modules/quiz.sh compares the chosen letter with ANSWER and shows
+# EXPLANATION afterwards. Nothing typed by the user is ever executed.
+
+### q1
+TOPIC: Unix Basics
+QUESTION: Which command prints the absolute path of the current directory?
+OPTION A: cd
+OPTION B: pwd
+OPTION C: ls
+OPTION D: path
+ANSWER: B
+HINT: The name is short for "print working directory".
+EXPLANATION: pwd asks the kernel for the current working directory and prints it as an absolute path. cd changes the directory, and ls lists what is inside it.
+
+### q2
+TOPIC: Unix Basics
+QUESTION: What does "ls -a" show that plain "ls" does not?
+OPTION A: The file sizes
+OPTION B: Hidden files, whose names begin with a dot
+OPTION C: The contents of every subdirectory
+OPTION D: The permission bits
+ANSWER: B
+HINT: Think about names that start with a full stop.
+EXPLANATION: -a means "all", so dotfiles such as .gitignore are listed along with the ordinary entries. Sizes and permissions need -l, and subdirectories need -R.
+
+### q3
+TOPIC: File Permissions
+QUESTION: A file has the mode 644. Who is allowed to write to it?
+OPTION A: Everyone
+OPTION B: The owner only
+OPTION C: The group only
+OPTION D: Nobody at all
+ANSWER: B
+HINT: Read the three digits as owner, group and others.
+EXPLANATION: 6 gives the owner read and write, while 4 gives the group read only and the last 4 gives others read only. So only the owner may write.
+
+### q4
+TOPIC: File Permissions
+QUESTION: Which command makes a script executable by its owner?
+OPTION A: chmod u+x script.sh
+OPTION B: chmod +r script.sh
+OPTION C: chown u+x script.sh
+OPTION D: umask 700 script.sh
+ANSWER: A
+HINT: "u" stands for user, which means the owner, and "x" means execute.
+EXPLANATION: chmod u+x adds the execute bit for the owner. +r adds read, chown changes ownership rather than permissions, and umask only affects files created later.
+
+### q5
+TOPIC: Shell Programming
+QUESTION: What exit status does a command return when it has succeeded?
+OPTION A: 1
+OPTION B: 0
+OPTION C: 255
+OPTION D: It returns nothing
+ANSWER: B
+HINT: It is the value the shell treats as true.
+EXPLANATION: Zero means success and any non-zero status means failure. The special variable $? holds the status of the last command that ran.
+
+### q6
+TOPIC: Shell Programming
+QUESTION: Inside a script, what does $1 refer to?
+OPTION A: The name of the script
+OPTION B: The first argument the script was given
+OPTION C: The exit status of the script
+OPTION D: The number of arguments
+ANSWER: B
+HINT: $0 is the script name; the numbered parameters are the arguments.
+EXPLANATION: $1 is the first positional parameter. $0 is the script name and $# is how many arguments there were.
+
+### q7
+TOPIC: Text Processing
+QUESTION: Which pipeline counts how many lines of a file contain the word ERROR?
+OPTION A: grep ERROR file | wc -l
+OPTION B: wc -l file | grep ERROR
+OPTION C: Either A or B
+OPTION D: cut -f1 file | grep ERROR
+ANSWER: A
+HINT: One command can count matches by itself, and another can count the lines it is fed.
+EXPLANATION: "grep ERROR file | wc -l" counts the matching lines that grep printed. "grep -c ERROR file" would give the same number. Option B pipes the wrong way round, and cut -f1 keeps only the first field.
+
+### q8
+TOPIC: Text Processing
+QUESTION: What does the command "cut -d' ' -f3" do?
+OPTION A: Splits the file into three equal parts
+OPTION B: Prints the third field, using a space as the separator
+OPTION C: Removes three characters from each line
+OPTION D: Sorts the lines by their third column
+ANSWER: B
+HINT: -d sets the delimiter and -f chooses the field.
+EXPLANATION: -d' ' makes a space the delimiter and -f3 selects the third field of every line, which is how UniShell pulls one column out of data/sample.log.
+
+### q9
+TOPIC: Processes
+QUESTION: What does the fork() system call do?
+OPTION A: Replaces the running program with another one
+OPTION B: Creates a new process that carries on from the same line
+OPTION C: Waits for a child process to finish
+OPTION D: Sends a signal to another process
+ANSWER: B
+HINT: The shell uses it every time it starts a new program.
+EXPLANATION: fork() turns one process into two. The parent receives the child's pid and the child receives 0. exec() replaces a program, wait() reaps a child, and kill() sends a signal.
+
+### q10
+TOPIC: Inter-Process Communication
+QUESTION: Which call creates a pipe that has a name in the file system?
+OPTION A: pipe()
+OPTION B: mkfifo()
+OPTION C: socket()
+OPTION D: open("/dev/pipe")
+ANSWER: B
+HINT: The name of the call says what it makes.
+EXPLANATION: mkfifo() creates a FIFO, which is a pipe with a name, so two programs that were not started from each other can meet at it. pipe() makes an unnamed pipe that only the process that created it and its children know about.
+
+### q11
+TOPIC: Inter-Process Communication
+QUESTION: Which signal can neither be caught nor ignored?
+OPTION A: SIGUSR1
+OPTION B: SIGTERM
+OPTION C: SIGKILL
+OPTION D: SIGALRM
+ANSWER: C
+HINT: It is the kernel's last resort for stopping a process.
+EXPLANATION: SIGKILL always acts, so no handler and no SIG_IGN can stop it; SIGSTOP is the same. SIGUSR1, SIGTERM and SIGALRM can all be handled with sigaction().

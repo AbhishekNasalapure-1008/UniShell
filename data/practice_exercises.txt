@@ -1,0 +1,73 @@
+# UniShell practice exercises
+# COMMAND: awk | PURPOSE: read one exercise block at a time for the practice module | MODULE: Quiz
+#
+# Each exercise starts with a line of the form "### eN" and then lists fixed
+# fields. An exercise is a small task the student tries in their own terminal;
+# UniShell shows the task, offers a hint, and then shows the worked solution
+# and an explanation so the answer can be checked.
+#
+# UniShell never runs the SOLUTION line. It only prints it, so nothing typed or
+# stored in this file is ever executed as a command.
+#
+# Field meanings:
+#   TOPIC    - the syllabus area the exercise practises
+#   TASK     - what the student should do
+#   HINT     - a nudge towards the command
+#   SOLUTION - the command that does the job
+#   EXPLAIN  - why that command works
+
+### e1
+TOPIC: Unix Basics
+TASK: List every entry in the current directory, including hidden files, in the long format.
+HINT: One letter adds the hidden entries and another letter switches on the long format.
+SOLUTION: ls -la
+EXPLAIN: -l prints the long form with permissions, owner, size and date, and -a adds the entries whose names begin with a dot. Together they give the full picture of a directory.
+
+### e2
+TOPIC: Unix Basics
+TASK: Print the absolute path of the directory you are standing in.
+HINT: The command name is short for "print working directory".
+SOLUTION: pwd
+EXPLAIN: pwd asks the kernel for the current working directory and prints it as an absolute path, which is the safest way to know exactly where a relative path will start from.
+
+### e3
+TOPIC: Shell Programming
+TASK: Put the word unishell into a shell variable called NAME and then print it.
+HINT: A variable assignment must not have spaces around the equals sign, and the value needs a dollar sign when it is used.
+SOLUTION: NAME=unishell   then   echo "$NAME"
+EXPLAIN: NAME=unishell stores the value in the shell itself. echo "$NAME" expands it and prints it. Writing NAME = unishell with spaces would make the shell look for a command called NAME instead.
+
+### e4
+TOPIC: File Permissions
+TASK: Create a file called private.txt that only its owner may read and write.
+HINT: Read plus write for the owner is the digit 6, and the group and others get nothing.
+SOLUTION: touch private.txt && chmod 600 private.txt
+EXPLAIN: touch creates an empty file and chmod 600 sets the mode to rw------- so only the owner has access. The 6 is 4 (read) plus 2 (write), and the two zeros leave nothing for group and others.
+
+### e5
+TOPIC: Text Processing
+TASK: Count how many lines of data/sample.log contain the word ERROR.
+HINT: grep can count matches by itself, without a second command.
+SOLUTION: grep -c ERROR data/sample.log
+EXPLAIN: -c makes grep print the number of matching lines instead of the lines themselves. Running it on data/sample.log in this project prints 7, which is also the number the module 4 demonstrations rely on.
+
+### e6
+TOPIC: Text Processing
+TASK: Print the third field of every line of data/sample.log without repeating any value.
+HINT: One command picks the field, another removes duplicates; join them with a pipe.
+SOLUTION: cut -d' ' -f3 data/sample.log | sort -u
+EXPLAIN: cut -d' ' -f3 keeps the third field of each line, which is the log level. sort -u sorts the result and drops repeated lines, so each level is printed once.
+
+### e7
+TOPIC: Processes
+TASK: Print the process id of the current shell and the process id of its parent.
+HINT: Both values live in special variables the shell maintains for you.
+SOLUTION: echo "mine=$$ parent=$PPID"
+EXPLAIN: $$ is replaced by the pid of the running shell, and $PPID by the pid of the process that started it. That pair is exactly what ps shows in its PID and PPID columns.
+
+### e8
+TOPIC: Inter-Process Communication
+TASK: Create a named pipe called myfifo and confirm that it really is a FIFO.
+HINT: Make it with mkfifo, then read the first character of the long listing.
+SOLUTION: mkfifo myfifo && ls -l myfifo
+EXPLAIN: mkfifo creates a FIFO, which is a pipe with a name. In the ls -l listing the first character is a p for a pipe, just as it is d for a directory and - for an ordinary file.

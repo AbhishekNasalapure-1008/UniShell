@@ -229,7 +229,8 @@ ensure_runtime_dirs() {
 # ------------------------------------------------------------
 # Only four fixed things are written: time, module, action and status. Text
 # typed by the user is never logged, so the log cannot collect passwords or
-# personal data.
+# personal data. The action text must not contain a "|" character, because
+# " | " is what separates the four fields.
 # log_activity <module> <action> [status]
 log_activity() {
   local module="$1" action="$2" status="${3:-OK}"
@@ -240,4 +241,13 @@ log_activity() {
     "$(date '+%Y-%m-%d %H:%M:%S')" "$module" "$action" "$status" \
     >> "$UNISHELL_ACTIVITY_LOG" 2>/dev/null || return 1
   return 0
+}
+
+# log_activity_exit <module> <action> <exit-status>
+# Records one finished piece of work together with the status it returned, so
+# the log says not only what was attempted but whether it worked. The status
+# is a plain number, so nothing but digits reaches the log file.
+log_activity_exit() {
+  local module="$1" action="$2" status="$3"
+  log_activity "$module" "$action" "exit=$status"
 }

@@ -174,7 +174,9 @@ sp_demo_exit_status() {
   msg_info "&& is a short if: 'do the next thing only if this one worked'."
   msg_info "|| is the opposite: 'do the next thing only if this one failed'."
 
-  log_activity "shell" "demo: exit status, && and ||" "OK"
+  # The action text must never contain a "|" character: the activity log uses
+  # " | " as its field separator, so a bar inside a field would split it.
+  log_activity "shell" "demo: exit status and the AND/OR operators" "OK"
   press_enter_to_continue
 }
 

@@ -115,19 +115,20 @@ expect_rc 0 "opening module 8 and returning to the menu works"
 expect_in "Module 8 - C System Calls Demonstrations" "module 8 opens the system calls sub-menu"
 
 run_menu '9
-
+0
 0
 '
-expect_rc 0 "an unfinished module is still reachable"
-expect_in "Quiz and Practical Exercises is not implemented yet" "an unfinished module says so honestly"
-expect_in "Phase 9" "an unfinished module names its scheduled phase"
+expect_rc 0 "opening module 9 and returning to the menu works"
+expect_in "Module 9 - Quiz and Practical Exercises" "module 9 opens the quiz sub-menu"
+expect_in "Start the quiz (multiple choice, scored)" "the quiz sub-menu options are listed"
 
 run_menu '10
-
+0
 0
 '
-expect_rc 0 "module 10 (Activity Logs) is reachable"
-expect_in "Activity Logs is not implemented yet" "module 10 is also reported as unfinished"
+expect_rc 0 "opening module 10 and returning to the menu works"
+expect_in "Module 10 - Activity Logs" "module 10 opens the activity log sub-menu"
+expect_in "Show the whole activity log" "the log sub-menu options are listed"
 
 # ---------- 4. end of input ----------
 printf '\n4. End of input\n'

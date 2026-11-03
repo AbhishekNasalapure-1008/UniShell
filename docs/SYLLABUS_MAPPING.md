@@ -130,6 +130,44 @@ the shell starts a program or opens a file.
 | directory calls | `sc_explain_dir_calls` | `mkdir`, `rmdir` (empty only), `chdir` and `getcwd`, plus the relative-path trap |
 | reading the source | `sc_read_source` | Any `c_programs/*.c` displayed with `cat`, never executed |
 
+## Inter-Process Communication (Phase 8)
+
+Module 7 (`modules/ipc.sh`) adds the third classic beyond-the-syllabus topic:
+how two processes talk to each other. It runs real compiled programs using
+`pipe()`, `mkfifo()` and `sigaction()`. Every wait has a deadline, so no
+demonstration can hang, and the only process ever signalled is the receiver
+UniShell started itself a moment earlier.
+
+| Topic | Where in UniShell | How it is demonstrated |
+|---|---|---|
+| why IPC is needed | `ipc_explain_what` | Processes have private memory, so the kernel has to carry data or a short notice between them |
+| unnamed pipe `pipe()` | `ipc_run_bin` → `bin/pipe_demo`; `c_programs/pipe_demo.c` | `pipe()` returns a read and a write descriptor; the forked child writes, the parent reads, and both close the ends they do not use |
+| `fork()`, `write()`, `read()`, `close()` | `c_programs/pipe_demo.c` | The child writes 22 bytes and closes its write end so the parent's `read()` sees end of file; the parent reaps it with `waitpid()` |
+| named pipe `mkfifo()` | `ipc_run_fifo` → `bin/fifo_receiver`; `c_programs/fifo_receiver.c` | Creates a FIFO inside `./sandbox`, shows the `p` type letter from `ls -l`, and reads it with `open(O_NONBLOCK)` |
+| `poll()` timeout | `c_programs/fifo_receiver.c` | With no sender the receiver reaches its deadline and exits with status 3 instead of hanging |
+| sender `stat()`, `open()`, `write()` | `bin/fifo_sender`; `c_programs/fifo_sender.c` | `stat()` confirms the path is a FIFO, `open(O_NONBLOCK)` retries on `ENXIO`, then `write()` sends the message and `close()` lets the reader see end of file |
+| `unlink()` cleanup | `c_programs/fifo_receiver.c` | The receiver removes the FIFO it created, so nothing is left behind |
+| signals and handlers | `ipc_run_bin` → `bin/signal_demo`; `c_programs/signal_demo.c` | `sigaction()` handlers, `raise()`, an `alarm()` timer, `pause()` and `SIG_IGN`; a handler only sets a `sig_atomic_t` flag |
+| signal reception | `ipc_run_signal_pair` → `bin/signal_receiver`; `c_programs/signal_receiver.c` | Handlers for `USR1`/`USR2`/`TERM` plus an `alarm()` deadline; it reports which signal arrived and exits normally |
+| signal sending `kill()` | `bin/signal_sender`; `c_programs/signal_sender.c` | A whitelist of `USR1`/`USR2`/`TERM`; refuses `KILL`/`STOP`, pid 0, pid 1 and its own pid |
+
+## Learning and Activity (Phase 9)
+
+Modules 9 (`modules/quiz.sh`) and 10 (`modules/logs.sh`) add the study side of
+UniShell: the quiz checks understanding of everything the earlier modules teach,
+and the log viewer turns the whole session into a record that can be read back.
+
+| Topic | Where in UniShell | How it is demonstrated |
+|---|---|---|
+| multiple-choice quiz | `modules/quiz.sh` → `quiz_load`, `quiz_start` | Reads `data/quiz_questions.txt`, prints each question and its four options, and accepts only `A`-`D` |
+| answer validation | `quiz_ask_answer` | A single letter compared with a fixed set; `h` shows a hint and `q` stops the quiz |
+| scoring | `quiz_finish`, `quiz_show_score` | Counts the correct answers and reports the score and the session accuracy |
+| hints and explanations | `data/quiz_questions.txt`, `data/practice_exercises.txt` | Every question carries a `HINT:` and an `EXPLANATION:`; every exercise a `HINT:` and a worked `SOLUTION:` |
+| practice exercises | `quiz_practice`, `quiz_show_exercise` | Shows the task, then the hint and the solution for the student to read; the solution is never run |
+| activity logging | `lib/common.sh` → `log_activity`, `log_activity_exit` | One timestamped line per action, `timestamp \| module \| action \| status`, always inside `./logs` |
+| exit status in the log | `log_activity_exit` | Records `exit=N`; the quiz logs `exit=0` for a perfect run and `exit=1` otherwise |
+| log viewer | `modules/logs.sh` | Explains the fields, then shows the whole log (`cat`), the newest entries (`tail -n`), one module (`awk`), a count per module, and the entries that did not finish cleanly |
+
 ---
 
 ## Coverage summary
@@ -141,10 +179,12 @@ the shell starts a program or opens a file.
 | Module 3 — File System and Permissions | chmod, umask, stat, ls -l, ownership, chown/passwd/su (explained only) | Implemented and tested (Phase 5) |
 | Module 4 — Text Processing | wc, od, grep, egrep, sort, uniq, cut, tr, head, tail, tee, diff, pipes, redirection, regex, quoting | Implemented and tested (Phase 5) |
 | Beyond the four modules — Processes and C System Calls | ps, fork, exec, wait/waitpid, zombies, orphans, open, read, write, close, creat, mkdir, rmdir, chdir, getcwd | Implemented and tested (Phase 7) |
+| Beyond the four modules — Inter-Process Communication | pipe, fork, mkfifo, open, poll, read, write, close, unlink, signals, sigaction, kill, raise, alarm, pause, SIG_IGN | Implemented and tested (Phase 8) |
+| Beyond the four modules — Learning, Activity and Logging | multiple-choice quiz, answer validation, scoring, hints, explanations, practice exercises, timestamps, exit status, activity log viewer | Implemented and tested (Phase 9) |
 
-**Not yet covered (later phases):** inter-process communication (Phase 8), and
-the quiz and logs viewer (Phase 9). Optional topics such as message queues,
-semaphores and shared memory remain out of scope.
+Every topic listed above is implemented and tested. Optional topics such as
+message queues, semaphores, shared memory and client-server sockets remain
+deliberately **out of scope**, and are named in `README.md`.
 
 _Related documents: [`COMMAND_MAP.md`](COMMAND_MAP.md) lists the exact command
 used by each feature; `README.md` describes how to build, run and test UniShell._
