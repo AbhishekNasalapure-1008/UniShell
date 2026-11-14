@@ -114,13 +114,18 @@ and `su` **without running them**, and option 3 runs seven small live demos
 (`echo`/`printf`, `date`/`cal`, `who`/`pwd`, `type`, `ls`, `read`/`test`/
 `readonly`, and `set`/`shift`/`trap`).
 
-**Module 2 — File and Directory Management.** Creates a small practice tree
-inside `./sandbox`, then demonstrates `pwd`, `cd`, `ls`, `mkdir`, `cp`, `mv`,
-`cat`, `wc` and removal. Every name typed is checked with `is_safe_name`
-(one plain name: no `/`, no space, no leading `-`) and again with
-`check_inside_sandbox` before anything is deleted. `sandbox/.gitkeep` is never
-removed, and a reset uses `find -mindepth 1 ! -name '.gitkeep'` so the sandbox
-itself survives.
+**Module 2 — File and Directory Management.** Nothing is created for you: the
+create option is an interactive sub-menu that asks for a name and then creates
+a single file (`touch`), a single directory (`mkdir`), a nested branch
+(`mkdir -p`), several files at once, or a file with multi-line content (`>`).
+An existing name is never written over; the content option asks for
+confirmation first. Every typed name is checked with `is_safe_name` (one plain
+name: no `/`, no space, no leading `-`); a nested path is split and every part
+is checked, an absolute path is refused outright, and `check_inside_sandbox`
+confirms the resolved path before anything is created or deleted. The module
+also demonstrates `pwd`, `cd`, `ls`, `cp`, `mv`, `cat` and `wc`.
+`sandbox/.gitkeep` is never removed, and a reset uses
+`find -mindepth 1 ! -name '.gitkeep'` so the sandbox itself survives.
 
 **Module 3 — File Permissions Lab.** Works on one practice file
 (`sandbox/perm_demo.txt`) and one practice directory. Shows `ls -l` and

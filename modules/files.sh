@@ -31,16 +31,56 @@ files_ask_name() {
   return 0
 }
 
-# files_make_demo_tree - create the sample tree the demos use.
-files_make_demo_tree() {
-  # COMMAND: mkdir -p | PURPOSE: create a directory and any missing parents | MODULE: Unix Basics
-  mkdir -p "$UNISHELL_SANDBOX/demo/inner" 2>/dev/null || return 1
-  # COMMAND: touch | PURPOSE: create an empty file, or refresh its timestamps | MODULE: Unix Basics
-  touch "$UNISHELL_SANDBOX/demo/hello.txt" "$UNISHELL_SANDBOX/notes.txt" 2>/dev/null || return 1
-  # COMMAND: > | PURPOSE: write text into a file | MODULE: Text Processing
-  printf 'line one\nline two\n' > "$UNISHELL_SANDBOX/demo/hello.txt"
-  # COMMAND: > | PURPOSE: write text into a file | MODULE: Text Processing
-  printf 'UniShell practice file\nalpha beta gamma\n' > "$UNISHELL_SANDBOX/notes.txt"
+# files_rel <path> - print a path the way the project sees it, for example
+# sandbox/notes.txt, so every message can show the path that was created.
+files_rel() {
+  printf 'sandbox/%s\n' "${1#"$UNISHELL_SANDBOX"/}"
+}
+
+# files_ask_relpath <prompt> - read a relative path into $FILES_RELPATH and its
+# full path into $FILES_PATH.
+# Every part between slashes must pass is_safe_name, which already refuses an
+# empty part, "." and "..", so "demo/inner" is accepted while "../etc" is not.
+# An absolute path is refused up front. check_inside_sandbox then confirms the
+# finished path really is inside ./sandbox.
+files_ask_relpath() {
+  local prompt="$1" rel rest part
+
+  if ! ask_text "$prompt"; then
+    msg_warn "No path was given."
+    return 1
+  fi
+  rel="$UNISHELL_INPUT"
+
+  # A leading slash means an absolute path, which would leave the sandbox.
+  case "$rel" in
+    /*)
+      msg_err "Absolute paths are refused. Use a path inside ./sandbox."
+      return 1
+      ;;
+  esac
+
+  rest="$rel"
+  while [ -n "$rest" ]; do
+    case "$rest" in
+      */*) part="${rest%%/*}"; rest="${rest#*/}" ;;
+      *)   part="$rest";       rest="" ;;
+    esac
+    if ! is_safe_name "$part"; then
+      msg_err "That is not a safe relative path inside ./sandbox."
+      return 1
+    fi
+  done
+
+  FILES_RELPATH="$rel"
+  FILES_PATH="$UNISHELL_SANDBOX/$rel"
+
+  # Final, independent check on the resolved path.
+  # COMMAND: path check | PURPOSE: prove the resolved path really is inside ./sandbox | MODULE: Unix Basics
+  if ! check_inside_sandbox "$FILES_PATH"; then
+    msg_err "Refused: that path is not inside ./sandbox."
+    return 1
+  fi
   return 0
 }
 
@@ -57,7 +97,7 @@ module_files() {
     section_title "Module 2 - File and Directory Management"
     printf '  %s\n' "  Working folder: $UNISHELL_SANDBOX"
     printf '\n'
-    printf '  %s\n' "1. Create files and directories (touch, mkdir -p)"
+    printf '  %s\n' "1. Create files and directories (touch, mkdir, mkdir -p)"
     printf '  %s\n' "2. List contents (ls, ls -a, ls -l, ls -R)"
     printf '  %s\n' "3. Paths and errors (pwd, cd, absolute vs relative)"
     printf '  %s\n' "4. Copy and move (cp, mv)"
@@ -73,7 +113,7 @@ module_files() {
     choice="$UNISHELL_CHOICE"
 
     case "$choice" in
-      1) files_demo_create ;;
+      1) files_menu_create ;;
       2) files_demo_list ;;
       3) files_demo_paths ;;
       4) files_demo_copy_move ;;
@@ -88,33 +128,270 @@ module_files() {
 # ------------------------------------------------------------
 # 1. Create
 # ------------------------------------------------------------
-files_demo_create() {
-  section_title "Create files and directories"
+# The create sub-menu. Nothing here is created automatically: every name is
+# typed by the user, and an existing name is never written over.
+files_menu_create() {
+  local choice
 
-  if files_make_demo_tree; then
-    msg_ok "Created: sandbox/demo/  sandbox/demo/inner/  sandbox/demo/hello.txt"
-  else
-    msg_err "Could not create the demo tree inside $UNISHELL_SANDBOX"
-    log_activity "files" "create demo tree failed" "error"
+  while :; do
+    section_title "Create files and directories"
+    printf '  Working folder: %s\n' "$UNISHELL_SANDBOX"
+    printf '\n'
+    printf '  %s\n' "1. Create a new file (touch)"
+    printf '  %s\n' "2. Create a new directory (mkdir)"
+    printf '  %s\n' "3. Create nested directories (mkdir -p)"
+    printf '  %s\n' "4. Create multiple files (touch)"
+    printf '  %s\n' "5. Create a file with custom content (> and a here-document)"
+    printf '  %s\n' "6. Return to previous menu"
+    printf '\n'
+
+    if ! ask_choice "Choose an option (1-6): " 1 6; then
+      return 0
+    fi
+    choice="$UNISHELL_CHOICE"
+
+    case "$choice" in
+      1) files_create_file ;;
+      2) files_create_dir ;;
+      3) files_create_nested ;;
+      4) files_create_many ;;
+      5) files_create_with_content ;;
+      6) return 0 ;;
+    esac
+  done
+}
+
+# 1 - create one empty file with a name the user types.
+files_create_file() {
+  local path
+
+  section_title "Create a new file"
+  files_ask_name "Name for the new file (for example: notes.txt): " || { press_enter_to_continue; return 0; }
+  path="$(sandbox_path "$FILES_NAME")" || { press_enter_to_continue; return 0; }
+
+  # Second, independent check: the resolved path must still be inside ./sandbox.
+  if ! check_inside_sandbox "$path"; then
+    msg_err "Refused: that path is not inside ./sandbox."
+    log_activity "files" "refused create outside sandbox" "refused"
     press_enter_to_continue
     return 0
   fi
 
-  printf '\n'
-  msg_info "mkdir -p makes every missing parent folder and does not fail when"
-  msg_info "the path already exists, so running this demo twice is harmless."
-
-  printf '\nTry the plain form, which refuses to overwrite:\n'
-  # COMMAND: mkdir (without -p) | PURPOSE: show the error when the directory already exists | MODULE: Unix Basics
-  if mkdir "$UNISHELL_SANDBOX/demo" 2>"$UNISHELL_SANDBOX/.mkdir.err"; then
-    msg_ok "mkdir created the directory."
-  else
-    msg_warn "mkdir refused: $(cat "$UNISHELL_SANDBOX/.mkdir.err")"
-    msg_info "That message went to standard error and the program kept running."
+  if [ -d "$path" ]; then
+    msg_err "'$FILES_NAME' is already a directory, so a file cannot use that name."
+    log_activity "files" "create file on a directory name" "refused"
+    press_enter_to_continue
+    return 0
   fi
-  rm -f -- "$UNISHELL_SANDBOX/.mkdir.err"
 
-  log_activity "files" "demo: create files and directories" "OK"
+  if [ -e "$path" ]; then
+    msg_warn "'$FILES_NAME' already exists, so nothing was changed."
+    msg_info "An existing file is never overwritten. Use option 5 if you want to"
+    msg_info "replace its content, and confirm when you are asked."
+    log_activity "files" "create file: name exists" "refused"
+    press_enter_to_continue
+    return 0
+  fi
+
+  # COMMAND: touch | PURPOSE: create an empty file with the typed name | MODULE: Unix Basics
+  if touch -- "$path" 2>/dev/null; then
+    msg_ok "touch created $(files_rel "$path")"
+    ls -l -- "$path"
+    log_activity "files" "demo: create a new file" "OK"
+  else
+    msg_err "touch could not create '$FILES_NAME'."
+    log_activity "files" "create file failed" "error"
+  fi
+  press_enter_to_continue
+}
+
+# 2 - create one directory with a name the user types.
+files_create_dir() {
+  local path
+
+  section_title "Create a new directory"
+  files_ask_name "Name for the new directory (for example: docs): " || { press_enter_to_continue; return 0; }
+  path="$(sandbox_path "$FILES_NAME")" || { press_enter_to_continue; return 0; }
+
+  if ! check_inside_sandbox "$path"; then
+    msg_err "Refused: that path is not inside ./sandbox."
+    log_activity "files" "refused create outside sandbox" "refused"
+    press_enter_to_continue
+    return 0
+  fi
+
+  if [ -e "$path" ]; then
+    if [ -d "$path" ]; then
+      msg_warn "'$FILES_NAME' already exists as a directory, so nothing was changed."
+    else
+      msg_err "'$FILES_NAME' already exists as a file, so a directory cannot use that name."
+    fi
+    log_activity "files" "create dir: name exists" "refused"
+    press_enter_to_continue
+    return 0
+  fi
+
+  # COMMAND: mkdir | PURPOSE: create one directory, and refuse when the name is already taken | MODULE: Unix Basics
+  if mkdir -- "$path" 2>/dev/null; then
+    msg_ok "mkdir created $(files_rel "$path")"
+    ls -ld -- "$path"
+    log_activity "files" "demo: create a new directory" "OK"
+  else
+    msg_err "mkdir could not create '$FILES_NAME'."
+    log_activity "files" "create dir failed" "error"
+  fi
+  press_enter_to_continue
+}
+
+# 3 - create a whole branch such as demo/inner in one step.
+files_create_nested() {
+  local rel path
+
+  section_title "Create nested directories"
+  printf 'Type a relative path. Every folder in it is created, including the\n'
+  printf 'missing parents, in one mkdir -p step.\n\n'
+
+  files_ask_relpath "Relative path inside ./sandbox (for example: demo/inner): " || { press_enter_to_continue; return 0; }
+  rel="$FILES_RELPATH"
+  path="$FILES_PATH"
+
+  if [ -e "$path" ] && [ ! -d "$path" ]; then
+    msg_err "'$rel' already exists as a file, so a directory cannot use that name."
+    log_activity "files" "create nested: name exists" "refused"
+    press_enter_to_continue
+    return 0
+  fi
+
+  # COMMAND: mkdir -p | PURPOSE: create the directory and every missing parent in one step | MODULE: Unix Basics
+  if mkdir -p -- "$path" 2>/dev/null; then
+    msg_ok "mkdir -p created $(files_rel "$path")"
+    printf '\nEach level now exists:\n'
+    # COMMAND: find | PURPOSE: list the branch that mkdir -p just made | MODULE: Unix Basics
+    ( cd "$UNISHELL_SANDBOX" && find "./$rel" -print 2>/dev/null )
+    printf '\n'
+    msg_info "mkdir without -p fails when a parent is missing. mkdir -p makes"
+    msg_info "every missing parent and stays quiet when the path already exists."
+    log_activity "files" "demo: create nested directories" "OK"
+  else
+    msg_err "mkdir -p could not create '$rel'."
+    log_activity "files" "create nested failed" "error"
+  fi
+  press_enter_to_continue
+}
+
+# 4 - create several files, one name per line, until an empty line is typed.
+files_create_many() {
+  local line path made=0 skipped=0
+
+  section_title "Create multiple files"
+  printf 'Type one file name per line. Press Enter on an empty line when you\n'
+  printf 'are finished.\n\n'
+
+  while :; do
+    printf 'New file name (empty line to finish): '
+    # COMMAND: read -r | PURPOSE: read one file name exactly as typed | MODULE: Unix Basics
+    if ! read -r line; then
+      printf '\n'
+      break
+    fi
+    [ -n "$line" ] || break
+
+    if ! is_safe_name "$line"; then
+      msg_err "That is not a safe name, so it was skipped."
+      skipped=$((skipped + 1))
+      continue
+    fi
+    path="$(sandbox_path "$line")" || { skipped=$((skipped + 1)); continue; }
+
+    if ! check_inside_sandbox "$path"; then
+      msg_err "Refused: that path is not inside ./sandbox."
+      skipped=$((skipped + 1))
+      continue
+    fi
+
+    if [ -e "$path" ]; then
+      msg_warn "'$line' already exists, so it was left untouched."
+      skipped=$((skipped + 1))
+      continue
+    fi
+
+    # COMMAND: touch | PURPOSE: create one empty file per typed name | MODULE: Unix Basics
+    if touch -- "$path" 2>/dev/null; then
+      msg_ok "touch created $(files_rel "$path")"
+      made=$((made + 1))
+    else
+      msg_err "touch could not create '$line'."
+      skipped=$((skipped + 1))
+    fi
+  done
+
+  printf '\n'
+  msg_info "touch created $made file(s); $skipped name(s) were skipped."
+  log_activity "files" "demo: create multiple files" "OK"
+  press_enter_to_continue
+}
+
+# 5 - create one file and let the user type its content until a line says END.
+files_create_with_content() {
+  local path line content="" lines
+
+  section_title "Create a file with custom content"
+  files_ask_name "Name for the file (for example: note.txt): " || { press_enter_to_continue; return 0; }
+  path="$(sandbox_path "$FILES_NAME")" || { press_enter_to_continue; return 0; }
+
+  if ! check_inside_sandbox "$path"; then
+    msg_err "Refused: that path is not inside ./sandbox."
+    log_activity "files" "refused create outside sandbox" "refused"
+    press_enter_to_continue
+    return 0
+  fi
+
+  if [ -d "$path" ]; then
+    msg_err "'$FILES_NAME' is already a directory, so a file cannot use that name."
+    log_activity "files" "create content on a directory name" "refused"
+    press_enter_to_continue
+    return 0
+  fi
+
+  # Writing would replace the whole file, so an existing name needs a clear yes.
+  if [ -e "$path" ]; then
+    msg_warn "'$FILES_NAME' already exists. Writing would replace its content."
+    if ! ask_yes_no "Replace '$FILES_NAME' with the new content?"; then
+      msg_info "Nothing was written."
+      log_activity "files" "create content: overwrite declined" "refused"
+      press_enter_to_continue
+      return 0
+    fi
+  fi
+
+  printf '\nType the content, one line at a time.\n'
+  printf 'Finish with a line that contains only: END\n\n'
+
+  while :; do
+    printf '> '
+    # COMMAND: read -r | PURPOSE: read one line of content exactly as typed | MODULE: Text Processing
+    if ! read -r line; then
+      printf '\n'
+      break
+    fi
+    if [ "$line" = "END" ]; then
+      break
+    fi
+    content+="$line"$'\n'
+  done
+
+  # COMMAND: > | PURPOSE: write the collected text into the file, only after the user agreed | MODULE: Text Processing
+  if printf '%s' "$content" > "$path" 2>/dev/null; then
+    lines="$(printf '%s' "$content" | wc -l)"
+    msg_ok "Wrote $(files_rel "$path") ($lines line(s))"
+    printf '\n--- cat %s ---\n' "$(files_rel "$path")"
+    # COMMAND: cat | PURPOSE: show what was just written | MODULE: Unix Basics
+    cat -- "$path"
+    log_activity "files" "demo: create a file with content" "OK"
+  else
+    msg_err "Could not write '$FILES_NAME'."
+    log_activity "files" "write content failed" "error"
+  fi
   press_enter_to_continue
 }
 
@@ -189,15 +466,14 @@ files_demo_copy_move() {
   local src dst
 
   section_title "Copy and move"
-  files_make_demo_tree
 
   files_ask_name "Source file inside ./sandbox (for example: notes.txt): " || { press_enter_to_continue; return 0; }
   src="$(sandbox_path "$FILES_NAME")" || { press_enter_to_continue; return 0; }
 
   if [ ! -f "$src" ]; then
     msg_err "There is no file named '$FILES_NAME' in ./sandbox."
-    msg_info "Option 1 creates sandbox/notes.txt: use a plain name, because a"
-    msg_info "name with a slash is refused so it can never leave the sandbox."
+    msg_info "Create a file first with option 1, then list what is there with option 2."
+    msg_info "Only a plain name is accepted, so a path can never leave ./sandbox."
     log_activity "files" "copy source missing" "not-found"
     press_enter_to_continue
     return 0
@@ -307,7 +583,7 @@ files_demo_view() {
 
   if [ ! -f "$path" ]; then
     msg_err "There is no file named '$FILES_NAME' in ./sandbox."
-    msg_info "Option 1 creates demo/hello.txt; option 2 shows what is there."
+    msg_info "Create a file first with option 1, then list what is there with option 2."
     log_activity "files" "view target missing" "not-found"
     press_enter_to_continue
     return 0

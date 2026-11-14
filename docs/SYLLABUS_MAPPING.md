@@ -31,13 +31,13 @@ present.
 | `cal` | `cmdlib_demo_date` | Prints the current month's calendar |
 | `pwd` | `cmdlib_demo_ident`, `files_demo_paths` | Shows the absolute current directory |
 | `cd` | `files_demo_paths` | Runs inside a subshell, plus a failing `cd` that returns status 1 |
-| `mkdir` | `files_demo_create` (`mkdir -p`), `files_make_demo_tree` | Creates a directory tree; plain `mkdir` on an existing name shows the error |
+| `mkdir` | `files_create_dir` (`mkdir`), `files_create_nested` (`mkdir -p`) | Creates one directory, or a whole nested branch from a relative path; an existing name is refused instead of replaced |
 | `rmdir` | `files_demo_remove` | Removes an empty directory only — it refuses when data is inside |
 | `cat` | `files_demo_view`; text demos | Prints a file and feeds pipes |
 | `mv` | `files_demo_copy_move` | Renames a copy inside `./sandbox` |
 | `rm` | `files_demo_remove` | Deletes one file that has passed both sandbox checks |
 | `cp` | `files_demo_copy_move` | Copies a file, keeping the original |
-| `touch` | `files_make_demo_tree` | Creates the practice files |
+| `touch` | `files_create_file`, `files_create_many` | Creates one file, or several files at once, from the names the user types |
 | File system concepts | `files_demo_paths`, `cmdlib_demo_ls` | Hidden files, absolute vs relative paths, `.`, `..`, `HOME`, `PATH` |
 
 ## Module 2 — Shell Programming
