@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniShell | Unix Learning Platform</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="logo">Uni<span>Shell</span></div>
+        <nav>
+            <a href="#home">Home</a>
+            <a href="#modules">Modules</a>
+            <a href="#commands">Commands</a>
+            <a href="#files">Files</a>
+            <a href="#permissions">Permissions</a>
+            <a href="#quiz">Quiz</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- ===================== Hero ===================== -->
+        <section class="hero" id="home">
+            <p class="tagline">UNIX LEARNING PLATFORM</p>
+            <h1>Learn Linux.<br><span>Master Unix.</span></h1>
+            <p class="hero-text">
+                Explore Unix commands, manage files, understand file permissions
+                and test your knowledge — through four interactive modules that
+                run safely inside a sandbox.
+            </p>
+            <a href="#modules" class="primary-btn">Explore Modules</a>
+        </section>
+
+        <!-- ===================== Module cards ===================== -->
+        <section class="modules-section" id="modules">
+            <div class="section-heading">
+                <p class="tagline">YOUR LEARNING PATH</p>
+                <h2>Explore Modules</h2>
+            </div>
+
+            <div class="module-grid">
+                <a href="#commands" class="module-card">
+                    <span>01</span>
+                    <h3>Unix Commands</h3>
+                    <p>Search the command library and read purpose, syntax and examples.</p>
+                    <small>Explore &rarr;</small>
+                </a>
+
+                <a href="#files" class="module-card">
+                    <span>02</span>
+                    <h3>File Management</h3>
+                    <p>Create, read, rename and delete files and folders in the sandbox.</p>
+                    <small>Explore &rarr;</small>
+                </a>
+
+                <a href="#permissions" class="module-card">
+                    <span>03</span>
+                    <h3>Permissions</h3>
+                    <p>Read symbolic and numeric modes and apply chmod safely.</p>
+                    <small>Explore &rarr;</small>
+                </a>
+
+                <a href="#quiz" class="module-card">
+                    <span>04</span>
+                    <h3>Quiz</h3>
+                    <p>Answer multiple-choice questions and see explanations.</p>
+                    <small>Explore &rarr;</small>
+                </a>
+            </div>
+        </section>
+
+        <!-- ===================== Module 01: Commands ===================== -->
+        <section class="workbench commands-section" id="commands">
+            <div class="section-heading">
+                <p class="tagline">MODULE 01</p>
+                <h2>Unix Command Library</h2>
+                <p>Search for a command and explore how it works.</p>
+            </div>
+
+            <input
+                type="search"
+                id="searchInput"
+                placeholder="Search commands... e.g. grep, ls, cat"
+            >
+
+            <div id="commandList" class="command-list">
+                Loading commands...
+            </div>
+
+            <div id="commandDetails" class="command-details">
+                <p class="muted">Select a command to view its explanation.</p>
+            </div>
+        </section>
+
+        <!-- ===================== Module 02: Files ===================== -->
+        <section class="workbench" id="files">
+            <div class="section-heading">
+                <p class="tagline">MODULE 02</p>
+                <h2>File Management</h2>
+                <p>Every change is kept inside <code>./sandbox</code>.</p>
+            </div>
+
+            <div class="file-toolbar">
+                <div class="path-bar" id="filePathBar"></div>
+                <button id="fileRefresh" class="ghost-btn" type="button">Refresh</button>
+            </div>
+
+            <div class="two-column">
+                <div class="panel">
+                    <h3>Sandbox contents</h3>
+                    <div id="fileList" class="file-list">Loading...</div>
+                </div>
+
+                <div class="panel">
+                    <h3 id="fileViewerTitle">Nothing selected</h3>
+                    <div id="fileViewer" class="file-viewer">
+                        <p class="muted">Select a file to view or edit its content.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>Create</h3>
+                <div class="form-row">
+                    <input id="createPath" type="text" placeholder="name or folder/name">
+                    <button id="createFileBtn" class="ghost-btn" type="button">New file</button>
+                    <button id="createDirBtn" class="ghost-btn" type="button">New folder</button>
+                    <label class="check">
+                        <input type="checkbox" id="createParents"> create missing folders
+                    </label>
+                </div>
+                <textarea id="createContent" rows="3"
+                          placeholder="optional starting content for a new file"></textarea>
+            </div>
+
+            <p id="fileStatus" class="status-line"></p>
+        </section>
+
+        <!-- ===================== Module 03: Permissions ===================== -->
+        <section class="workbench permissions-section" id="permissions">
+            <div class="section-heading">
+                <p class="tagline">MODULE 03</p>
+                <h2>File Permissions</h2>
+                <p>Read the modes of the sandbox entries and apply chmod safely.</p>
+            </div>
+
+            <div class="two-column">
+                <div class="panel">
+                    <h3>Entries</h3>
+                    <div id="permList" class="perm-list">Loading...</div>
+                </div>
+
+                <div class="panel">
+                    <h3>Details</h3>
+                    <div id="permDetail">
+                        <p class="muted">Select an entry to see its rights.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>chmod</h3>
+                <div class="form-row">
+                    <input id="permPath" type="text" placeholder="path inside sandbox">
+                    <input id="permMode" type="text" maxlength="3" placeholder="e.g. 644">
+                    <button id="permApply" class="ghost-btn" type="button">Apply mode</button>
+                </div>
+                <p class="muted">The mode must be three octal digits (for example 644 or 755).</p>
+            </div>
+
+            <div class="panel">
+                <h3>How permissions work</h3>
+                <div id="permExplain"></div>
+            </div>
+
+            <p id="permStatus" class="status-line"></p>
+        </section>
+
+        <!-- ===================== Module 04: Quiz ===================== -->
+        <section class="workbench quiz-section" id="quiz">
+            <div class="section-heading">
+                <p class="tagline">MODULE 04</p>
+                <h2>Quiz</h2>
+                <p>Choose an answer for every question, then submit to see your score.</p>
+            </div>
+
+            <p class="quiz-meta" id="quizMeta"></p>
+
+            <div id="quizForm" class="quiz-form">Loading questions...</div>
+
+            <div class="form-row">
+                <button id="quizSubmit" class="primary-btn" type="button">Submit answers</button>
+                <button id="quizReset" class="ghost-btn" type="button">Try again</button>
+            </div>
+
+            <div id="quizResult" class="quiz-result"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>UniShell — Learn, Practice and Explore Unix.</p>
+    </footer>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

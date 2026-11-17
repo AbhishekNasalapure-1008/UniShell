@@ -3,7 +3,8 @@
 A menu-driven terminal application written in Bash and C that teaches Unix
 programming by running **real** commands and **real** system calls.
 
-> **Status: Phase 9 of 11 — all ten modules are implemented and tested.**
+> **Status: the ten-module CLI is complete and tested (Phase 9 of 11), and a
+> Flask web interface now adds four of those modules to the browser.**
 > The scaffold, `Makefile` and test harness exist and have been run and
 > verified, and the menu drives the ten-module application. Every module from
 > **1 (Unix Command Library)** to **10 (Activity Logs)** is working: they run
@@ -11,6 +12,10 @@ programming by running **real** commands and **real** system calls.
 > `./sandbox`, write every log line into `./logs`, and are covered by
 > automated tests. Nothing in this document claims a feature works before it
 > has been built and tested.
+>
+> The browser interface (section 13) covers **four** modules — Unix Commands,
+> File Management, Permissions and Quiz — and shares the same data files and
+> the same `./sandbox` as the CLI. The other six modules stay terminal-only.
 
 ---
 
@@ -67,6 +72,8 @@ UniShell/
   sandbox/             the only place destructive demos may write
   logs/                activity.log (timestamped, appended safely)
   tests/               test_*.sh, run by "make test"
+  backend/             Flask REST API (app.py, routes/, services/) + .venv
+  frontend/            static web interface (index.html, style.css, script.js)
   docs/                COMMAND_MAP.md, SYLLABUS_MAPPING.md
   bin/                 compiled executables only (generated, git-ignored)
 ```
@@ -79,6 +86,7 @@ confined to `sandbox/` and `logs/`.
 
 - Linux (or WSL2 Ubuntu) with Bash 4 or newer
 - GCC and GNU Make (`sudo apt-get install build-essential`)
+- Python 3 with Flask for the optional web interface (section 13)
 - No root privileges required to build or run UniShell
 
 ## 6. How to Build
@@ -105,7 +113,7 @@ written to the log.
 
 ## 8. Module Descriptions
 
-**Module 1 — Unix Command Library.** A sub-menu that either lists all 28
+**Module 1 — Unix Command Library.** A sub-menu that either lists all 40
 documented commands or explains one by name. Explanations are read from
 `data/command_library.txt` with `awk`; nothing typed is ever executed. Each
 entry has seven fixed fields: syllabus module, purpose, syntax, example,
@@ -266,23 +274,25 @@ make test     # runs every tests/test_*.sh and reports pass/fail
 make clean    # removes generated files only (bin/*, *.o, *.tmp)
 ```
 
-Current state: eleven test scripts, run in order by `make test`:
+Current state: twelve test scripts, run in order by `make test`:
 
 | Script | Checks | Result |
 |---|---|---|
-| `tests/test_00_scaffold.sh` | folders, write access, toolchain, LF line endings | 43 passed, 0 failed |
+| `tests/test_00_scaffold.sh` | folders, write access, toolchain, LF line endings | 44 passed, 0 failed |
 | `tests/test_01_common.sh` | `lib/common.sh`: name safety, sandbox containment, logging, input validation | 40 passed, 0 failed |
 | `tests/test_02_menu.sh` | menu navigation, invalid input, exit codes, injection safety, logging | 48 passed, 0 failed |
 | `tests/test_03_commands.sh` | module 1: all 28 commands documented, seven fields each, typed text never executed | 22 passed, 0 failed |
-| `tests/test_04_files.sh` | module 2: create/copy/remove/reset, and removal cannot escape `./sandbox` | 25 passed, 0 failed |
+| `tests/test_04_files.sh` | module 2: create/copy/remove/reset, and removal cannot escape `./sandbox` | 77 passed, 0 failed |
 | `tests/test_05_permissions.sh` | module 3: `chmod` numeric and symbolic, `umask` on new files, `chown` never run | 19 passed, 0 failed |
 | `tests/test_06_text.sh` | module 4: `grep`/`egrep` counts, pipes, redirection, `tee`, `diff`, regex, quoting | 28 passed, 0 failed |
 | `tests/test_07_shell.sh` | module 5: the example scripts really run, every scripting demo works, `~/.profile` is never executed or changed | 71 passed, 0 failed |
 | `tests/test_08_c.sh` | modules 6 and 8: every C program compiles without warnings, runs, returns 0, prints what it claims, and leaves nothing outside `./sandbox` | 67 passed, 0 failed |
 | `tests/test_09_ipc.sh` | module 7: pipes, FIFO and signals run and end without hanging, the receiver stops by itself when no partner appears, and the sender only ever signals a process UniShell started | 106 passed, 0 failed |
 | `tests/test_10_learning.sh` | modules 9 and 10: the question and exercise files load, the quiz scores a perfect run, a wrong answer is marked wrong, the log gets four fields per line, and every log file stays under `./logs` | 104 passed, 0 failed |
+| `tests/test_11_web_api.sh` | the Flask web API (run through its test client): commands, files, permissions and quiz endpoints, and that the sandbox cannot be left | 91 passed, 0 failed |
 
-`make test` ends with `=== RESULT: ALL TESTS PASSED ===` (573 checks).
+`make test` ends with `=== RESULT: ALL TESTS PASSED ===` (717 checks: 626 from
+the CLI tests and 91 from the web API).
 
 Extra manual safety verification (run outside the test suite): `bash -n` on
 every shell script, no `eval` anywhere in `unishell.sh`, `lib/`, `modules/` or
@@ -309,3 +319,80 @@ it started itself a moment earlier.
 - Optional modules (message queues, semaphores, shared memory, client-server).
 - Persistent progress tracking across sessions (the quiz score is in memory only).
 - Exportable session report for submission.
+
+---
+
+## 13. Web Application (browser interface)
+
+The same project also ships a browser interface: a small Flask REST API plus a
+plain HTML, CSS and JavaScript frontend. It is optional — the terminal
+application keeps working exactly as before — and it deliberately exposes
+**only four** modules: Unix Commands, File Management, Permissions and Quiz.
+The other six CLI modules (text processing, shell programming, processes, IPC,
+C system calls and activity logs) stay terminal-only.
+
+The web interface reads the **same** `data/command_library.txt` and
+`data/quiz_questions.txt`, and every file operation happens in the **same**
+`./sandbox`, so no content is duplicated and there is no second copy of the
+data.
+
+Safety rules are the same as the CLI: no endpoint runs a shell command or
+`eval`, file work uses the Python standard library only, absolute paths and
+`..` are refused, every resolved path is checked again to be inside
+`./sandbox`, overwriting and deleting need an explicit confirmation, `chmod`
+accepts only three octal digits, and `chown` is explained but never run.
+
+### Files
+
+```
+backend/app.py              Flask application, static serving, JSON errors
+backend/routes/             one blueprint per module (commands, files,
+                            permissions, quiz) plus shared JSON helpers
+backend/services/           the logic: parse the data files, sandboxed file
+                            operations, permissions, quiz scoring
+backend/requirements.txt    Flask
+backend/.venv/              local virtual environment (git-ignored)
+frontend/index.html         the four-module dashboard
+frontend/style.css          the dark theme
+frontend/script.js          fetches the API (no framework)
+tests/test_11_web_api.sh    runs tests/web_api_checks.py through Flask's test
+                            client (no server or port needed)
+```
+
+### How to run
+
+```bash
+cd ~/UniShell
+
+# one-time setup
+python3 -m venv backend/.venv
+backend/.venv/bin/pip install -r backend/requirements.txt
+
+# start the web application
+backend/.venv/bin/python -m backend.app
+# then open http://127.0.0.1:5000   (the API index is at /api)
+```
+
+The frontend is served from the same origin as the API, so no CORS setup and no
+build step are needed.
+
+### Endpoints
+
+```
+GET    /api/health
+GET    /api/commands[?q=&category=]   GET /api/commands/<name>
+GET    /api/commands/search?q=        GET /api/commands/categories
+GET    /api/files[?path=]             GET /api/files/content?path=
+GET    /api/files/stats
+POST   /api/files                     POST /api/files/directory
+PUT    /api/files/content             POST /api/files/rename
+DELETE /api/files
+GET    /api/permissions/list[?path=]  GET /api/permissions/explain
+GET    /api/permissions?path=         PUT /api/permissions
+GET    /api/quiz/info                 GET /api/quiz/questions
+POST   /api/quiz/submit
+```
+
+The quiz answers and explanations are never sent with the questions; scoring
+happens on the server, and the answers are returned only after an attempt is
+submitted.
